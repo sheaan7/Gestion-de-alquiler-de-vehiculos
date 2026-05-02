@@ -1,9 +1,13 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { listarVehiculos } from "./clienteApi";
 
 describe("clienteApi", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   it("construye endpoint de vehiculos con URL relativa", async () => {
     const simuladorFetch = vi.fn().mockResolvedValue({
       ok: true,
@@ -17,7 +21,6 @@ describe("clienteApi", () => {
       "/api/vehiculos",
       { cache: "no-store" }
     );
-    vi.unstubAllGlobals();
   });
 });
 
