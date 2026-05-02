@@ -15,8 +15,8 @@ WORKDIR /app
 RUN apk add --no-cache wget
 ENV NODE_ENV=production
 ENV URL_GATEWAY=http://localhost:8080
-COPY --from=compilacion /app/.next ./.next
-COPY --from=compilacion /app/node_modules ./node_modules
-COPY --from=compilacion /app/package.json ./package.json
+ENV HOSTNAME=0.0.0.0
+COPY --from=compilacion /app/.next/standalone ./
+COPY --from=compilacion /app/.next/static ./.next/static
 EXPOSE 3000
-CMD ["npm", "start"]
+CMD ["node", "server.js"]
