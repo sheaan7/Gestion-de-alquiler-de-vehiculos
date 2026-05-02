@@ -10,6 +10,8 @@ services:
       MYSQL_ROOT_PASSWORD: root
     ports:
       - "3306:3306"
+    volumes:
+      - datos-mysql:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
       interval: 10s
@@ -95,6 +97,8 @@ services:
     build: ./frontend
     container_name: frontend
     restart: unless-stopped
+    environment:
+      - URL_GATEWAY=http://gateway:8080
     depends_on:
       gateway:
         condition: service_healthy
@@ -111,3 +115,6 @@ services:
 networks:
   red-alquiler:
     driver: bridge
+
+volumes:
+  datos-mysql:
