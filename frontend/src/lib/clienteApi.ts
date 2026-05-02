@@ -1,4 +1,4 @@
-import { Operacion, Vehiculo } from "../types/vehiculo";
+import { Operacion, Vehiculo, VehiculoInput } from "../types/vehiculo";
 
 export async function listarVehiculos(): Promise<Vehiculo[]> {
   const respuesta = await fetch("/api/vehiculos", { cache: "no-store" });
@@ -38,5 +38,41 @@ export async function cancelarOperacion(idOperacion: string): Promise<void> {
   if (!respuesta.ok) {
     const msg = await respuesta.text();
     throw new Error(msg || "No se pudo cancelar la operacion");
+  }
+}
+
+export async function crearVehiculo(input: VehiculoInput): Promise<Vehiculo> {
+  const respuesta = await fetch("/api/vehiculos", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  if (!respuesta.ok) {
+    const msg = await respuesta.text();
+    throw new Error(msg || "No se pudo crear el vehiculo");
+  }
+  return respuesta.json();
+}
+
+export async function actualizarVehiculo(id: number, input: VehiculoInput): Promise<Vehiculo> {
+  const respuesta = await fetch(`/api/vehiculos/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  if (!respuesta.ok) {
+    const msg = await respuesta.text();
+    throw new Error(msg || "No se pudo actualizar el vehiculo");
+  }
+  return respuesta.json();
+}
+
+export async function eliminarVehiculo(id: number): Promise<void> {
+  const respuesta = await fetch(`/api/vehiculos/${id}`, {
+    method: "DELETE",
+  });
+  if (!respuesta.ok) {
+    const msg = await respuesta.text();
+    throw new Error(msg || "No se pudo eliminar el vehiculo");
   }
 }

@@ -7,6 +7,12 @@ export interface Vehiculo {
   estado: EstadoVehiculo;
 }
 
+export interface VehiculoInput {
+  marca: string;
+  modelo: string;
+  estado: EstadoVehiculo;
+}
+
 export interface Operacion {
   idOperacion: string;
   idVehiculo: number;

@@ -2,12 +2,16 @@
 
 import { useEffect, useState } from "react";
 import {
+  actualizarVehiculo,
   alquilarVehiculo,
   cancelarOperacion,
+  crearVehiculo,
+  eliminarVehiculo,
   listarOperaciones,
   listarVehiculos,
 } from "../lib/clienteApi";
-import { Operacion, Vehiculo } from "../types/vehiculo";
+import VehiculoModal, { ModalConfig } from "../components/VehiculoModal";
+import { Operacion, Vehiculo, VehiculoInput } from "../types/vehiculo";
 
 type Mensaje = { texto: string; tipo: "exito" | "error" };
 
@@ -17,6 +21,7 @@ export default function PaginaInicio() {
   const [cargando, setCargando] = useState(true);
   const [procesando, setProcesando] = useState<string | null>(null);
   const [mensaje, setMensaje] = useState<Mensaje | null>(null);
+  const [modalConfig, setModalConfig] = useState<ModalConfig | null>(null);
 
   async function cargarDatos() {
     try {
@@ -77,6 +82,90 @@ export default function PaginaInicio() {
     }
   }
 
+  async function confirmarCrear(input: VehiculoInput) {
+    setProcesando("modal");
+    setMensaje(null);
+    try {
+      await crearVehiculo(input);
+      setMensaje({
+        texto: "Vehículo creado correctamente",
+        tipo: "exito",
+      });
+      await cargarDatos();
+      setModalConfig(null);
+    } catch (error) {
+      setMensaje({
+        texto: error instanceof Error ? error.message : "Error al crear vehículo",
+        tipo: "error",
+      });
+    } finally {
+      setProcesando(null);
+    }
+  }
+
+  async function confirmarEditar(id: number, input: VehiculoInput) {
+    setProcesando("modal");
+    setMensaje(null);
+    try {
+      await actualizarVehiculo(id, input);
+      setMensaje({
+        texto: "Vehículo actualizado correctamente",
+        tipo: "exito",
+      });
+      await cargarDatos();
+      setModalConfig(null);
+    } catch (error) {
+      setMensaje({
+        texto: error instanceof Error ? error.message : "Error al editar vehículo",
+        tipo: "error",
+      });
+    } finally {
+      setProcesando(null);
+    }
+  }
+
+  async function confirmarEliminar(id: number) {
+    setProcesando("modal");
+    setMensaje(null);
+    try {
+      await eliminarVehiculo(id);
+      setMensaje({
+        texto: "Vehículo eliminado correctamente",
+        tipo: "exito",
+      });
+      await cargarDatos();
+      setModalConfig(null);
+    } catch (error) {
+      setMensaje({
+        texto: error instanceof Error ? error.message : "Error al eliminar vehículo",
+        tipo: "error",
+      });
+    } finally {
+      setProcesando(null);
+    }
+  }
+
+  async function confirmarModal(input?: VehiculoInput) {
+    if (!modalConfig) {
+      return;
+    }
+    if (modalConfig.modo === "crear") {
+      if (!input) {
+        return;
+      }
+      await confirmarCrear(input);
+      return;
+    }
+    if (modalConfig.modo === "editar") {
+      if (!input) {
+        return;
+      }
+      await confirmarEditar(modalConfig.vehiculo.id, input);
+      return;
+    }
+    await confirmarEliminar(modalConfig.vehiculo.id);
+  }
+
   useEffect(() => {
     void cargarDatos();
   }, []);
@@ -111,8 +200,16 @@ export default function PaginaInicio() {
       )}
 
       <section className="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
-        <div className="px-6 py-4 border-b border-gray-100">
+        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
           <h2 className="text-xl font-semibold text-gray-700">Vehículos</h2>
+          <button
+            type="button"
+            onClick={() => setModalConfig({ modo: "crear" })}
+            disabled={procesando === "modal"}
+            className="px-3 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          >
+            + Nuevo Vehículo
+          </button>
         </div>
         {vehiculos.length === 0 ? (
           <p className="px-6 py-10 text-center text-gray-400">
@@ -155,6 +252,7 @@ export default function PaginaInicio() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
+                      <div className="flex items-center gap-2 flex-wrap">
                       <button
                         type="button"
                         onClick={() => void alquilar(vehiculo.id)}
@@ -168,6 +266,23 @@ export default function PaginaInicio() {
                           ? "Procesando..."
                           : "Alquilar"}
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => setModalConfig({ modo: "editar", vehiculo })}
+                        disabled={procesando === "modal"}
+                        className="px-3 py-1.5 bg-amber-500 text-white text-xs font-medium rounded-lg hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setModalConfig({ modo: "eliminar", vehiculo })}
+                        disabled={procesando === "modal"}
+                        className="px-3 py-1.5 bg-red-600 text-white text-xs font-medium rounded-lg hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                      >
+                        Eliminar
+                      </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -241,6 +356,22 @@ export default function PaginaInicio() {
           </div>
         )}
       </section>
+
+      {modalConfig && (
+        <VehiculoModal
+          config={modalConfig}
+          procesando={procesando === "modal"}
+          onConfirmar={(input) => {
+            void confirmarModal(input);
+          }}
+          onCerrar={() => {
+            if (procesando === "modal") {
+              return;
+            }
+            setModalConfig(null);
+          }}
+        />
+      )}
     </main>
   );
 }

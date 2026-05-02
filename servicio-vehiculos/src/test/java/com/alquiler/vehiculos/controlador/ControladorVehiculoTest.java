@@ -1,7 +1,10 @@
 package com.alquiler.vehiculos.controlador;
 
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.alquiler.vehiculos.modelo.EstadoVehiculo;
@@ -32,5 +35,24 @@ class ControladorVehiculoTest {
         when(servicioVehiculo.listar()).thenReturn(List.of(vehiculo));
         clienteMvc.perform(get("/api/vehiculos"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void actualizarEstadoConPutResponde200() throws Exception {
+        Vehiculo vehiculo = new Vehiculo();
+        vehiculo.setId(1L);
+        vehiculo.setMarca("Toyota");
+        vehiculo.setModelo("Corolla");
+        vehiculo.setEstado(EstadoVehiculo.NO_DISPONIBLE);
+        when(servicioVehiculo.actualizarEstado(1L, EstadoVehiculo.NO_DISPONIBLE)).thenReturn(vehiculo);
+
+        clienteMvc.perform(
+                        put("/api/vehiculos/1/estado")
+                                .contentType("application/json")
+                                .content("{\"estado\":\"NO_DISPONIBLE\"}")
+                )
+                .andExpect(status().isOk());
+
+        verify(servicioVehiculo).actualizarEstado(eq(1L), eq(EstadoVehiculo.NO_DISPONIBLE));
     }
 }

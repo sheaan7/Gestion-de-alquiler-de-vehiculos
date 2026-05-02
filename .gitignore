@@ -1,6 +1,7 @@
 # Instrucciones y documentación interna
 Instrucciones1.txt
 docs/
+.claude/
 
 # ──────────────────────────────────────────────
 # Maven – artefactos compilados

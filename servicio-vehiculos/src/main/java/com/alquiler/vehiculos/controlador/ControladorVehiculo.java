@@ -67,6 +67,11 @@ public class ControladorVehiculo {
         return servicioVehiculo.actualizarEstado(idVehiculo, peticionEstado.estado());
     }
 
+    @PutMapping("/{idVehiculo}/estado")
+    public Vehiculo reemplazarEstado(@PathVariable Long idVehiculo, @RequestBody PeticionEstado peticionEstado) {
+        return servicioVehiculo.actualizarEstado(idVehiculo, peticionEstado.estado());
+    }
+
     public record PeticionEstado(EstadoVehiculo estado) {
     }
 }
