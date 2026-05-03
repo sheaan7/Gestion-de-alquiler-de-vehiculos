@@ -5,8 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { obtenerVehiculo, alquilarVehiculo } from "../../../lib/clienteApi";
 import { Vehiculo } from "../../../types/vehiculo";
 import Spinner from "../../../components/Spinner";
-import MensajeFeedback from "../../../components/MensajeFeedback";
 import EstadoBadge from "../../../components/EstadoBadge";
+import MensajeFeedback from "../../../components/MensajeFeedback";
 
 export default function DetalleVehiculo() {
   const { id } = useParams<{ id: string }>();
@@ -35,8 +35,8 @@ export default function DetalleVehiculo() {
     setMensaje(null);
     try {
       const op = await alquilarVehiculo(vehiculo.id);
-      setMensaje({ texto: `Operación ${op.idOperacion} confirmada`, tipo: "exito" });
-      setVehiculo((prev) => prev ? { ...prev, estado: "NO_DISPONIBLE" } : prev);
+      setMensaje({ texto: `Operación ${op.idOperacion.slice(0, 8)}… confirmada`, tipo: "exito" });
+      setVehiculo((prev) => (prev ? { ...prev, estado: "NO_DISPONIBLE" } : prev));
     } catch (e) {
       setMensaje({ texto: e instanceof Error ? e.message : "Error al alquilar", tipo: "error" });
     } finally {
@@ -47,11 +47,11 @@ export default function DetalleVehiculo() {
   if (cargando) return <Spinner />;
 
   return (
-    <div className="max-w-lg mx-auto">
+    <div className="max-w-lg">
       <button
         type="button"
         onClick={() => router.back()}
-        className="mb-6 text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
+        className="mb-5 flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors"
       >
         ← Volver
       </button>
@@ -63,26 +63,34 @@ export default function DetalleVehiculo() {
       )}
 
       {vehiculo ? (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
           <div className="flex items-start justify-between mb-6">
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">{vehiculo.marca} {vehiculo.modelo}</h1>
-              <p className="text-sm text-gray-400 mt-1">ID: {vehiculo.id}</p>
+              <h1 className="text-2xl font-extrabold text-gray-900 font-head">
+                {vehiculo.marca} {vehiculo.modelo}
+              </h1>
+              <span className="mt-2 inline-block font-mono text-sm bg-gray-100 text-gray-700 px-3 py-1 rounded-lg font-bold">
+                {vehiculo.placa}
+              </span>
             </div>
             <EstadoBadge estado={vehiculo.estado} />
           </div>
 
-          <div className="space-y-3 mb-6">
-            <div className="flex justify-between py-2 border-b border-gray-100">
-              <span className="text-sm text-gray-500">Marca</span>
-              <span className="text-sm font-medium text-gray-800">{vehiculo.marca}</span>
-            </div>
-            <div className="flex justify-between py-2 border-b border-gray-100">
-              <span className="text-sm text-gray-500">Modelo</span>
-              <span className="text-sm font-medium text-gray-800">{vehiculo.modelo}</span>
-            </div>
-            <div className="flex justify-between py-2">
-              <span className="text-sm text-gray-500">Estado</span>
+          <div className="divide-y divide-gray-100 mb-6">
+            {[
+              { label: "Marca", valor: vehiculo.marca },
+              { label: "Modelo", valor: vehiculo.modelo },
+              { label: "Año", valor: vehiculo.anio },
+              { label: "Tipo", valor: vehiculo.tipo },
+              { label: "Km actuales", valor: `${vehiculo.km_actuales.toLocaleString("es-CO")} km` },
+            ].map(({ label, valor }) => (
+              <div key={label} className="flex justify-between py-3 text-sm">
+                <span className="text-gray-500">{label}</span>
+                <span className="font-semibold text-gray-900">{valor}</span>
+              </div>
+            ))}
+            <div className="flex justify-between py-3 text-sm">
+              <span className="text-gray-500">Estado</span>
               <EstadoBadge estado={vehiculo.estado} />
             </div>
           </div>
@@ -91,7 +99,7 @@ export default function DetalleVehiculo() {
             type="button"
             onClick={() => void alquilar()}
             disabled={vehiculo.estado !== "DISPONIBLE" || procesando}
-            className="w-full py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="w-full py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             {procesando ? "Procesando..." : vehiculo.estado === "DISPONIBLE" ? "Alquilar vehículo" : "No disponible"}
           </button>

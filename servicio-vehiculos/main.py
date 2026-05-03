@@ -15,6 +15,8 @@ def buscar(
     marca: Optional[str] = Query(None),
     modelo: Optional[str] = Query(None),
     estado: Optional[schemas.EstadoVehiculo] = Query(None),
+    placa: Optional[str] = Query(None),
+    tipo: Optional[str] = Query(None),
     db: Session = Depends(get_db),
 ):
     query = db.query(models.Vehiculo)
@@ -24,6 +26,10 @@ def buscar(
         query = query.filter(models.Vehiculo.modelo.ilike(f"%{modelo}%"))
     if estado:
         query = query.filter(models.Vehiculo.estado == estado)
+    if placa:
+        query = query.filter(models.Vehiculo.placa.ilike(f"%{placa}%"))
+    if tipo:
+        query = query.filter(models.Vehiculo.tipo == tipo)
     return query.all()
 
 
@@ -71,8 +77,16 @@ def eliminar(id: int, db: Session = Depends(get_db)):
 
 
 @app.patch("/api/vehiculos/{id}/estado", response_model=schemas.VehiculoResponse)
+def actualizar_estado_patch(id: int, body: schemas.EstadoUpdate, db: Session = Depends(get_db)):
+    return _cambiar_estado(id, body, db)
+
+
 @app.put("/api/vehiculos/{id}/estado", response_model=schemas.VehiculoResponse)
-def actualizar_estado(id: int, body: schemas.EstadoUpdate, db: Session = Depends(get_db)):
+def actualizar_estado_put(id: int, body: schemas.EstadoUpdate, db: Session = Depends(get_db)):
+    return _cambiar_estado(id, body, db)
+
+
+def _cambiar_estado(id: int, body: schemas.EstadoUpdate, db: Session):
     db_vehiculo = db.query(models.Vehiculo).filter(models.Vehiculo.id == id).first()
     if not db_vehiculo:
         raise HTTPException(status_code=404, detail="Vehículo no encontrado")

@@ -13,49 +13,68 @@ interface VehiculoTableProps {
 
 export default function VehiculoTable({ vehiculos, procesando, onAlquilar, onAbrirModal }: VehiculoTableProps) {
   if (vehiculos.length === 0) {
-    return <p className="px-6 py-10 text-center text-gray-400 text-sm">No hay vehículos registrados.</p>;
+    return (
+      <p className="py-12 text-center text-sm text-gray-400">
+        No hay vehículos registrados.
+      </p>
+    );
   }
 
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
-        <thead className="bg-gray-50 text-gray-500 uppercase text-xs tracking-wider">
-          <tr>
-            <th className="px-6 py-3 text-left">ID</th>
-            <th className="px-6 py-3 text-left">Marca</th>
-            <th className="px-6 py-3 text-left">Modelo</th>
-            <th className="px-6 py-3 text-left">Estado</th>
-            <th className="px-6 py-3 text-left">Acciones</th>
+        <thead>
+          <tr className="bg-gray-50 border-b border-gray-200">
+            <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Placa</th>
+            <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Marca / Modelo</th>
+            <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Año</th>
+            <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Tipo</th>
+            <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Km actuales</th>
+            <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Estado</th>
+            <th className="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Acciones</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
-          {vehiculos.map((vehiculo) => (
-            <tr key={vehiculo.id} className="hover:bg-gray-50 transition-colors">
-              <td className="px-6 py-4 text-gray-400">{vehiculo.id}</td>
-              <td className="px-6 py-4 font-medium text-gray-800">{vehiculo.marca}</td>
-              <td className="px-6 py-4 text-gray-600">{vehiculo.modelo}</td>
-              <td className="px-6 py-4"><EstadoBadge estado={vehiculo.estado} /></td>
-              <td className="px-6 py-4">
+          {vehiculos.map((v) => (
+            <tr key={v.id} className="hover:bg-gray-50 transition-colors">
+              <td className="px-5 py-3.5">
+                <span className="font-mono text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-md font-bold">
+                  {v.placa}
+                </span>
+              </td>
+              <td className="px-5 py-3.5">
+                <span className="font-semibold text-gray-900">{v.marca}</span>{" "}
+                <span className="text-gray-500">{v.modelo}</span>
+              </td>
+              <td className="px-5 py-3.5 text-gray-500">{v.anio}</td>
+              <td className="px-5 py-3.5 text-gray-500">{v.tipo}</td>
+              <td className="px-5 py-3.5 text-gray-600 font-medium">
+                {v.km_actuales.toLocaleString("es-CO")} km
+              </td>
+              <td className="px-5 py-3.5">
+                <EstadoBadge estado={v.estado} />
+              </td>
+              <td className="px-5 py-3.5">
                 <div className="flex gap-2 flex-wrap">
                   <button
                     type="button"
-                    onClick={() => onAlquilar(vehiculo.id)}
-                    disabled={vehiculo.estado !== "DISPONIBLE" || procesando === `v-${vehiculo.id}`}
-                    className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                    onClick={() => onAlquilar(v.id)}
+                    disabled={v.estado !== "DISPONIBLE" || procesando === `v-${v.id}`}
+                    className="px-3 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                   >
-                    {procesando === `v-${vehiculo.id}` ? "Procesando..." : "Alquilar"}
+                    {procesando === `v-${v.id}` ? "..." : "Alquilar"}
                   </button>
                   <button
                     type="button"
-                    onClick={() => onAbrirModal({ modo: "editar", vehiculo })}
-                    className="px-3 py-1.5 bg-gray-100 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-200 transition-colors"
+                    onClick={() => onAbrirModal({ modo: "editar", vehiculo: v })}
+                    className="px-3 py-1.5 bg-gray-100 text-gray-700 text-xs font-semibold rounded-lg hover:bg-gray-200 transition-colors"
                   >
                     Editar
                   </button>
                   <button
                     type="button"
-                    onClick={() => onAbrirModal({ modo: "eliminar", vehiculo })}
-                    className="px-3 py-1.5 bg-red-50 text-red-600 text-xs font-medium rounded-lg hover:bg-red-100 transition-colors"
+                    onClick={() => onAbrirModal({ modo: "eliminar", vehiculo: v })}
+                    className="px-3 py-1.5 bg-red-50 text-red-600 text-xs font-semibold rounded-lg hover:bg-red-100 border border-red-100 transition-colors"
                   >
                     Eliminar
                   </button>

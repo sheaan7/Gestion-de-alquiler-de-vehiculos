@@ -5,16 +5,33 @@ services:
     restart: unless-stopped
     environment:
       MYSQL_DATABASE: vehiculos
-      MYSQL_ROOT_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: root
     ports:
       - "3306:3306"
     volumes:
       - datos-mysql:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-ppassword"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
       interval: 10s
       timeout: 5s
       retries: 10
+    networks:
+      - red-alquiler
+
+  phpmyadmin:
+    image: phpmyadmin:5-apache
+    container_name: phpmyadmin-alquiler
+    restart: unless-stopped
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: root
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8085:80"
     networks:
       - red-alquiler
 
@@ -23,7 +40,7 @@ services:
     container_name: servicio-vehiculos
     restart: unless-stopped
     environment:
-      DATABASE_URL: mysql+pymysql://root:password@db:3306/vehiculos
+      DATABASE_URL: mysql+pymysql://root:root@db:3306/vehiculos
     depends_on:
       db:
         condition: service_healthy

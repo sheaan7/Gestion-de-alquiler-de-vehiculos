@@ -25,7 +25,7 @@ export default function AdminPage() {
     setMensaje(null);
     try {
       const op = await alquilarVehiculo(idVehiculo);
-      setMensaje({ texto: `Operación ${op.idOperacion} confirmada`, tipo: "exito" });
+      setMensaje({ texto: `Operación ${op.idOperacion.slice(0, 8)}… confirmada`, tipo: "exito" });
       await recargar();
     } catch (e) {
       setMensaje({ texto: e instanceof Error ? e.message : "Error al alquilar", tipo: "error" });
@@ -41,7 +41,7 @@ export default function AdminPage() {
     try {
       if (modalConfig.modo === "crear" && input) {
         await crearVehiculo(input);
-        setMensaje({ texto: "Vehículo creado exitosamente", tipo: "exito" });
+        setMensaje({ texto: "Vehículo registrado exitosamente", tipo: "exito" });
       } else if (modalConfig.modo === "editar" && input) {
         await actualizarVehiculo(modalConfig.vehiculo.id, input);
         setMensaje({ texto: "Vehículo actualizado exitosamente", tipo: "exito" });
@@ -62,15 +62,15 @@ export default function AdminPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Gestión de Vehículos</h1>
-          <p className="text-gray-500 text-sm mt-1">Panel administrativo — CRUD completo</p>
+          <h1 className="text-3xl font-extrabold text-gray-900 font-head">Administración</h1>
+          <p className="text-gray-500 text-sm mt-1">Gestión de inventario — CRUD completo</p>
         </div>
         <button
           type="button"
           onClick={() => setModalConfig({ modo: "crear" })}
-          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+          className="px-5 py-2.5 bg-blue-600 text-white text-sm font-semibold rounded-xl hover:bg-blue-700 shadow-sm transition-colors"
         >
-          + Nuevo Vehículo
+          + Agregar Vehículo
         </button>
       </div>
 
@@ -80,10 +80,16 @@ export default function AdminPage() {
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+          <h2 className="font-bold text-gray-800 font-head">Inventario de vehículos</h2>
+          <span className="text-xs text-gray-400">{vehiculos.length} registros</span>
+        </div>
         {cargando && <Spinner />}
         {error && !cargando && (
-          <div className="p-6"><MensajeFeedback texto={error} tipo="error" /></div>
+          <div className="p-5">
+            <MensajeFeedback texto={error} tipo="error" />
+          </div>
         )}
         {!cargando && !error && (
           <VehiculoTable

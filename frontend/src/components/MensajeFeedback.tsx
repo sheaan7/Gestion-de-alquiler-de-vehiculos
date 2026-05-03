@@ -5,19 +5,19 @@ interface MensajeFeedbackProps {
 }
 
 export default function MensajeFeedback({ texto, tipo, onCerrar }: MensajeFeedbackProps) {
-  const estilos =
+  const clases =
     tipo === "exito"
       ? "bg-green-50 text-green-800 border-green-200"
-      : "bg-red-50 text-red-800 border-red-200";
+      : "bg-red-50 text-red-700 border-red-200";
 
   return (
-    <div className={`flex items-start justify-between px-4 py-3 rounded-lg text-sm font-medium border ${estilos}`}>
+    <div className={`flex items-start justify-between px-4 py-3 rounded-xl text-sm font-medium border ${clases}`}>
       <span>{texto}</span>
       {onCerrar && (
         <button
           type="button"
           onClick={onCerrar}
-          className="ml-3 text-current opacity-60 hover:opacity-100 leading-none"
+          className="ml-3 opacity-50 hover:opacity-100 transition-opacity leading-none"
         >
           ✕
         </button>

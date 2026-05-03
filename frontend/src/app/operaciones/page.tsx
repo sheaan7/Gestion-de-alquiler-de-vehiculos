@@ -31,7 +31,7 @@ export default function PaginaOperaciones() {
     setMensaje(null);
     try {
       await cancelarOperacion(idOperacion);
-      setMensaje({ texto: `Operación ${idOperacion} cancelada`, tipo: "exito" });
+      setMensaje({ texto: "Operación cancelada exitosamente", tipo: "exito" });
       await cargar();
     } catch (e) {
       setMensaje({ texto: e instanceof Error ? e.message : "Error al cancelar", tipo: "error" });
@@ -42,9 +42,18 @@ export default function PaginaOperaciones() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Operaciones</h1>
-        <p className="text-gray-500 text-sm mt-1">Historial de alquileres</p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-extrabold text-gray-900 font-head">Operaciones</h1>
+          <p className="text-gray-500 text-sm mt-1">Historial de alquileres</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => void cargar()}
+          className="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors"
+        >
+          Actualizar
+        </button>
       </div>
 
       {mensaje && (
@@ -53,14 +62,14 @@ export default function PaginaOperaciones() {
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-        {cargando && <Spinner />}
-        {!cargando && (
-          <OperacionTable
-            operaciones={operaciones}
-            procesando={procesando}
-            onCancelar={cancelar}
-          />
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-gray-100">
+          <h2 className="font-bold text-gray-800 font-head">Registro de alquileres</h2>
+        </div>
+        {cargando ? (
+          <Spinner />
+        ) : (
+          <OperacionTable operaciones={operaciones} procesando={procesando} onCancelar={cancelar} />
         )}
       </div>
     </div>

@@ -63,6 +63,7 @@ docker compose ps
 - Eureka: `http://localhost:8761`
 - Gateway: `http://localhost:8080`
 - Frontend: `http://localhost:3000`
+- phpMyAdmin: `http://localhost:8085`
 
 ## Validación post-deploy
 
@@ -96,7 +97,7 @@ Si aparece `permission denied while trying to connect to the docker API`, ejecut
 
 ### Puertos ocupados
 
-Si un puerto ya está en uso (`3000`, `8080`, `8081`, `8082`, `8761`, `3306`), libera el puerto o cambia mapeos en `docker-compose.yml`.
+Si un puerto ya está en uso (`3000`, `8080`, `8081`, `8082`, `8085`, `8761`, `3306`), libera el puerto o cambia mapeos en `docker-compose.yml`.
 
 ### Servicio en estado `unhealthy`
 
