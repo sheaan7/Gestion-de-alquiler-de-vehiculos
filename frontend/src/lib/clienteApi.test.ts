@@ -113,7 +113,7 @@ describe("clienteApi", () => {
 
     await expect(
       crearVehiculo({ marca: "A", modelo: "B", estado: "DISPONIBLE" })
-    ).rejects.toThrow("No se pudo crear el vehiculo");
+    ).rejects.toThrow("No se pudo crear el vehículo");
   });
 });
 

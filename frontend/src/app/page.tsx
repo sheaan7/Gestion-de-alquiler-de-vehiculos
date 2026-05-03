@@ -1,377 +1,103 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  actualizarVehiculo,
-  alquilarVehiculo,
-  cancelarOperacion,
-  crearVehiculo,
-  eliminarVehiculo,
-  listarOperaciones,
-  listarVehiculos,
-} from "../lib/clienteApi";
-import VehiculoModal, { ModalConfig } from "../components/VehiculoModal";
-import { Operacion, Vehiculo, VehiculoInput } from "../types/vehiculo";
+import Link from "next/link";
+import { listarVehiculos, listarOperaciones } from "../lib/clienteApi";
+import { Vehiculo, Operacion } from "../types/vehiculo";
+import StatCard from "../components/StatCard";
+import Spinner from "../components/Spinner";
+import MensajeFeedback from "../components/MensajeFeedback";
+import EstadoBadge from "../components/EstadoBadge";
 
-type Mensaje = { texto: string; tipo: "exito" | "error" };
-
-export default function PaginaInicio() {
+export default function Dashboard() {
   const [vehiculos, setVehiculos] = useState<Vehiculo[]>([]);
   const [operaciones, setOperaciones] = useState<Operacion[]>([]);
   const [cargando, setCargando] = useState(true);
-  const [procesando, setProcesando] = useState<string | null>(null);
-  const [mensaje, setMensaje] = useState<Mensaje | null>(null);
-  const [modalConfig, setModalConfig] = useState<ModalConfig | null>(null);
-
-  async function cargarDatos() {
-    try {
-      const [datosVehiculos, datosOperaciones] = await Promise.all([
-        listarVehiculos(),
-        listarOperaciones(),
-      ]);
-      setVehiculos(datosVehiculos);
-      setOperaciones(datosOperaciones);
-    } catch (error) {
-      setMensaje({
-        texto: error instanceof Error ? error.message : "Error al cargar datos",
-        tipo: "error",
-      });
-    } finally {
-      setCargando(false);
-    }
-  }
-
-  async function alquilar(idVehiculo: number) {
-    const clave = `v-${idVehiculo}`;
-    setProcesando(clave);
-    setMensaje(null);
-    try {
-      const operacion = await alquilarVehiculo(idVehiculo);
-      setMensaje({
-        texto: `Operación ${operacion.idOperacion} confirmada`,
-        tipo: "exito",
-      });
-      await cargarDatos();
-    } catch (error) {
-      setMensaje({
-        texto: error instanceof Error ? error.message : "Error al alquilar",
-        tipo: "error",
-      });
-    } finally {
-      setProcesando(null);
-    }
-  }
-
-  async function cancelar(idOperacion: string) {
-    setProcesando(idOperacion);
-    setMensaje(null);
-    try {
-      await cancelarOperacion(idOperacion);
-      setMensaje({
-        texto: `Operación ${idOperacion} cancelada`,
-        tipo: "exito",
-      });
-      await cargarDatos();
-    } catch (error) {
-      setMensaje({
-        texto: error instanceof Error ? error.message : "Error al cancelar",
-        tipo: "error",
-      });
-    } finally {
-      setProcesando(null);
-    }
-  }
-
-  async function confirmarCrear(input: VehiculoInput) {
-    setProcesando("modal");
-    setMensaje(null);
-    try {
-      await crearVehiculo(input);
-      setMensaje({
-        texto: "Vehículo creado correctamente",
-        tipo: "exito",
-      });
-      await cargarDatos();
-      setModalConfig(null);
-    } catch (error) {
-      setMensaje({
-        texto: error instanceof Error ? error.message : "Error al crear vehículo",
-        tipo: "error",
-      });
-    } finally {
-      setProcesando(null);
-    }
-  }
-
-  async function confirmarEditar(id: number, input: VehiculoInput) {
-    setProcesando("modal");
-    setMensaje(null);
-    try {
-      await actualizarVehiculo(id, input);
-      setMensaje({
-        texto: "Vehículo actualizado correctamente",
-        tipo: "exito",
-      });
-      await cargarDatos();
-      setModalConfig(null);
-    } catch (error) {
-      setMensaje({
-        texto: error instanceof Error ? error.message : "Error al editar vehículo",
-        tipo: "error",
-      });
-    } finally {
-      setProcesando(null);
-    }
-  }
-
-  async function confirmarEliminar(id: number) {
-    setProcesando("modal");
-    setMensaje(null);
-    try {
-      await eliminarVehiculo(id);
-      setMensaje({
-        texto: "Vehículo eliminado correctamente",
-        tipo: "exito",
-      });
-      await cargarDatos();
-      setModalConfig(null);
-    } catch (error) {
-      setMensaje({
-        texto: error instanceof Error ? error.message : "Error al eliminar vehículo",
-        tipo: "error",
-      });
-    } finally {
-      setProcesando(null);
-    }
-  }
-
-  async function confirmarModal(input?: VehiculoInput) {
-    if (!modalConfig) {
-      return;
-    }
-    if (modalConfig.modo === "crear") {
-      if (!input) {
-        return;
-      }
-      await confirmarCrear(input);
-      return;
-    }
-    if (modalConfig.modo === "editar") {
-      if (!input) {
-        return;
-      }
-      await confirmarEditar(modalConfig.vehiculo.id, input);
-      return;
-    }
-    await confirmarEliminar(modalConfig.vehiculo.id);
-  }
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void cargarDatos();
+    async function cargar() {
+      try {
+        const [v, o] = await Promise.all([listarVehiculos(), listarOperaciones()]);
+        setVehiculos(v);
+        setOperaciones(o);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Error al cargar datos");
+      } finally {
+        setCargando(false);
+      }
+    }
+    void cargar();
   }, []);
 
-  if (cargando) {
-    return (
-      <main className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
-          <p className="text-gray-500">Cargando datos...</p>
-        </div>
-      </main>
-    );
-  }
+  const disponibles = vehiculos.filter((v) => v.estado === "DISPONIBLE").length;
+  const confirmadas = operaciones.filter((o) => o.estado === "CONFIRMADA").length;
+
+  if (cargando) return <Spinner mensaje="Cargando dashboard..." />;
 
   return (
-    <main className="max-w-5xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">
-        Sistema de Alquiler de Vehículos
-      </h1>
+    <div>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-800">Bienvenido</h1>
+        <p className="text-gray-500 mt-1">Resumen del sistema de alquiler de automóviles</p>
+      </div>
 
-      {mensaje && (
-        <div
-          className={`mb-6 px-4 py-3 rounded-lg text-sm font-medium border ${
-            mensaje.tipo === "exito"
-              ? "bg-green-50 text-green-800 border-green-200"
-              : "bg-red-50 text-red-800 border-red-200"
-          }`}
-        >
-          {mensaje.texto}
+      {error && (
+        <div className="mb-6">
+          <MensajeFeedback texto={error} tipo="error" onCerrar={() => setError(null)} />
         </div>
       )}
 
-      <section className="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between gap-3">
-          <h2 className="text-xl font-semibold text-gray-700">Vehículos</h2>
-          <button
-            type="button"
-            onClick={() => setModalConfig({ modo: "crear" })}
-            disabled={procesando === "modal"}
-            className="px-3 py-2 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            + Nuevo Vehículo
-          </button>
-        </div>
-        {vehiculos.length === 0 ? (
-          <p className="px-6 py-10 text-center text-gray-400">
-            No hay vehículos registrados.
-          </p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-gray-500 uppercase text-xs tracking-wider">
-                <tr>
-                  <th className="px-6 py-3 text-left">ID</th>
-                  <th className="px-6 py-3 text-left">Marca</th>
-                  <th className="px-6 py-3 text-left">Modelo</th>
-                  <th className="px-6 py-3 text-left">Estado</th>
-                  <th className="px-6 py-3 text-left">Acción</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {vehiculos.map((vehiculo) => (
-                  <tr
-                    key={vehiculo.id}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
-                    <td className="px-6 py-4 text-gray-400">{vehiculo.id}</td>
-                    <td className="px-6 py-4 font-medium text-gray-800">
-                      {vehiculo.marca}
-                    </td>
-                    <td className="px-6 py-4 text-gray-600">
-                      {vehiculo.modelo}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold ${
-                          vehiculo.estado === "DISPONIBLE"
-                            ? "bg-green-100 text-green-700"
-                            : "bg-gray-100 text-gray-500"
-                        }`}
-                      >
-                        {vehiculo.estado}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 flex-wrap">
-                      <button
-                        type="button"
-                        onClick={() => void alquilar(vehiculo.id)}
-                        disabled={
-                          vehiculo.estado !== "DISPONIBLE" ||
-                          procesando === `v-${vehiculo.id}`
-                        }
-                        className="px-3 py-1.5 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                      >
-                        {procesando === `v-${vehiculo.id}`
-                          ? "Procesando..."
-                          : "Alquilar"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setModalConfig({ modo: "editar", vehiculo })}
-                        disabled={procesando === "modal"}
-                        className="px-3 py-1.5 bg-amber-500 text-white text-xs font-medium rounded-lg hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                      >
-                        Editar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setModalConfig({ modo: "eliminar", vehiculo })}
-                        disabled={procesando === "modal"}
-                        className="px-3 py-1.5 bg-red-600 text-white text-xs font-medium rounded-lg hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                      >
-                        Eliminar
-                      </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+        <StatCard titulo="Total Vehículos" valor={vehiculos.length} color="blue" />
+        <StatCard titulo="Disponibles" valor={disponibles} color="green" />
+        <StatCard titulo="No Disponibles" valor={vehiculos.length - disponibles} color="gray" />
+        <StatCard titulo="Alquileres Activos" valor={confirmadas} color="red" />
+      </div>
 
-      <section className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-100">
-          <h2 className="text-xl font-semibold text-gray-700">Operaciones</h2>
-        </div>
-        {operaciones.length === 0 ? (
-          <p className="px-6 py-10 text-center text-gray-400">
-            No hay operaciones registradas.
-          </p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-gray-500 uppercase text-xs tracking-wider">
-                <tr>
-                  <th className="px-6 py-3 text-left">ID Operación</th>
-                  <th className="px-6 py-3 text-left">ID Vehículo</th>
-                  <th className="px-6 py-3 text-left">Estado</th>
-                  <th className="px-6 py-3 text-left">Acción</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {operaciones.map((operacion) => (
-                  <tr
-                    key={operacion.idOperacion}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
-                    <td className="px-6 py-4 font-mono text-gray-400 text-xs">
-                      {operacion.idOperacion}
-                    </td>
-                    <td className="px-6 py-4 text-gray-600">
-                      {operacion.idVehiculo}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold ${
-                          operacion.estado === "CONFIRMADA"
-                            ? "bg-blue-100 text-blue-700"
-                            : "bg-gray-100 text-gray-500"
-                        }`}
-                      >
-                        {operacion.estado}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <button
-                        type="button"
-                        onClick={() => void cancelar(operacion.idOperacion)}
-                        disabled={
-                          operacion.estado === "CANCELADA" ||
-                          procesando === operacion.idOperacion
-                        }
-                        className="px-3 py-1.5 bg-red-500 text-white text-xs font-medium rounded-lg hover:bg-red-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                      >
-                        {procesando === operacion.idOperacion
-                          ? "Procesando..."
-                          : "Cancelar"}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      <div className="grid md:grid-cols-2 gap-6">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+            <h2 className="font-semibold text-gray-700">Últimos vehículos</h2>
+            <Link href="/vehiculos" className="text-xs text-blue-600 hover:underline">Ver todos</Link>
           </div>
-        )}
-      </section>
+          <div className="divide-y divide-gray-100">
+            {vehiculos.slice(0, 5).map((v) => (
+              <div key={v.id} className="px-6 py-3 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-800">{v.marca} {v.modelo}</p>
+                  <p className="text-xs text-gray-400">ID: {v.id}</p>
+                </div>
+                <EstadoBadge estado={v.estado} />
+              </div>
+            ))}
+            {vehiculos.length === 0 && (
+              <p className="px-6 py-6 text-sm text-gray-400 text-center">Sin vehículos</p>
+            )}
+          </div>
+        </div>
 
-      {modalConfig && (
-        <VehiculoModal
-          config={modalConfig}
-          procesando={procesando === "modal"}
-          onConfirmar={(input) => {
-            void confirmarModal(input);
-          }}
-          onCerrar={() => {
-            if (procesando === "modal") {
-              return;
-            }
-            setModalConfig(null);
-          }}
-        />
-      )}
-    </main>
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+          <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+            <h2 className="font-semibold text-gray-700">Últimas operaciones</h2>
+            <Link href="/operaciones" className="text-xs text-blue-600 hover:underline">Ver todas</Link>
+          </div>
+          <div className="divide-y divide-gray-100">
+            {operaciones.slice(0, 5).map((o) => (
+              <div key={o.idOperacion} className="px-6 py-3 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-mono text-gray-500">{o.idOperacion}</p>
+                  <p className="text-xs text-gray-400">Vehículo ID: {o.idVehiculo}</p>
+                </div>
+                <EstadoBadge estado={o.estado} />
+              </div>
+            ))}
+            {operaciones.length === 0 && (
+              <p className="px-6 py-6 text-sm text-gray-400 text-center">Sin operaciones</p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

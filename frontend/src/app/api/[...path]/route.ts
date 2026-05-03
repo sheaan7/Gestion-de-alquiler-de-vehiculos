@@ -41,31 +41,23 @@ export async function PUT(request: NextRequest, { params }: { params: Params }) 
   const cuerpo = await request.text();
   const respuesta = await fetch(destino, {
     method: "PUT",
-    headers: cuerpo ? { "Content-Type": "application/json" } : {},
-    body: cuerpo || undefined,
+    headers: { "Content-Type": "application/json" },
+    body: cuerpo,
   });
   if (!respuesta.ok) {
     const msg = await respuesta.text();
     return new NextResponse(msg || "Error del servidor", { status: respuesta.status });
   }
-  const contentType = respuesta.headers.get("content-type");
-  if (contentType?.includes("application/json")) {
-    return NextResponse.json(await respuesta.json(), { status: respuesta.status });
-  }
-  return new NextResponse(null, { status: respuesta.status });
+  return NextResponse.json(await respuesta.json(), { status: respuesta.status });
 }
 
-export async function DELETE(_: NextRequest, { params }: { params: Params }) {
+export async function DELETE(request: NextRequest, { params }: { params: Params }) {
   const { path } = await params;
   const destino = `${GATEWAY}/api/${path.join("/")}`;
   const respuesta = await fetch(destino, { method: "DELETE" });
   if (!respuesta.ok) {
     const msg = await respuesta.text();
     return new NextResponse(msg || "Error del servidor", { status: respuesta.status });
-  }
-  const contentType = respuesta.headers.get("content-type");
-  if (contentType?.includes("application/json")) {
-    return NextResponse.json(await respuesta.json(), { status: respuesta.status });
   }
   return new NextResponse(null, { status: respuesta.status });
 }
