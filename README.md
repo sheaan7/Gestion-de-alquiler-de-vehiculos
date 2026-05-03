@@ -1,39 +1,55 @@
-# Gestión de alquiler de vehiculos
+# Gestión de Alquiler de Vehículos
 
 Sistema de alquiler de vehículos con arquitectura de microservicios.  
-Incluye frontend web, descubrimiento de servicios con Eureka, enrutamiento por Gateway y despliegue completo con Docker Compose.
+Backend en **Python / FastAPI**, frontend en **Next.js 15**, enrutamiento con **nginx** y despliegue completo con **Docker Compose**.
 
 ## Arquitectura
 
-### Componentes principales
+### Componentes
 
-| Componente | Puerto | Responsabilidad |
-|---|---:|---|
-| `frontend` | 3000 | Interfaz web para listar vehículos, alquilar y cancelar operaciones |
-| `gateway` | 8080 | Punto único de entrada para APIs, ruteo a microservicios |
-| `eureka-server` | 8761 | Registro y descubrimiento de servicios |
-| `servicio-vehiculos` | 8081 | CRUD de vehículos, búsquedas y gestión de estado |
-| `servicio-operaciones` | 8082 | Gestión de alquiler/cancelación consultando `servicio-vehiculos` |
-| `mysql` | 3306 | Persistencia relacional para `servicio-vehiculos` |
+| Componente | Puerto | Tecnología | Responsabilidad |
+|---|---:|---|---|
+| `frontend` | 3000 | Next.js 15 + React 18 + Tailwind | Interfaz web: dashboard, flota, admin CRUD, operaciones |
+| `gateway` | 8080 | nginx | Punto único de entrada; enruta `/api/vehiculos` y `/api/operaciones` |
+| `servicio-vehiculos` | 8001 | Python 3.12 + FastAPI + SQLAlchemy | CRUD de vehículos (placa, marca, modelo, año, tipo, km, estado) + búsqueda |
+| `servicio-operaciones` | 8002 | Python 3.12 + FastAPI | Registrar alquiler, cancelar operación; llama a `servicio-vehiculos` |
+| `db` | 3306 | MySQL 8.4 | Persistencia relacional de vehículos |
+| `phpmyadmin` | 8085 | phpMyAdmin 5 | Administración visual de la base de datos |
 
 ### Flujo de comunicación
 
-1. El usuario interactúa con el `frontend`.
-2. El frontend consume el `gateway`.
-3. El `gateway` enruta solicitudes hacia `servicio-vehiculos` y `servicio-operaciones`.
-4. `servicio-operaciones` valida disponibilidad y actualiza estado en `servicio-vehiculos`.
-5. Todos los servicios se registran en `eureka-server`.
+```
+Usuario → frontend:3000
+           └─► gateway:8080 (nginx)
+                 ├─► servicio-vehiculos:8001  (FastAPI + MySQL)
+                 └─► servicio-operaciones:8002 (FastAPI, en memoria)
+                           └─► servicio-vehiculos:8001  (valida disponibilidad y actualiza estado)
+```
+
+El frontend actúa como proxy interno: las llamadas del navegador van a `/api/...` en el propio servidor Next.js, que las reenvía al gateway usando la variable de entorno `URL_GATEWAY`.
+
+### Modelo de datos — Vehículo
+
+| Campo | Tipo | Descripción |
+|---|---|---|
+| `id` | int | Identificador autoincremental |
+| `placa` | string | Placa única del vehículo (ej. `ABC-123`) |
+| `marca` | string | Marca (ej. Toyota) |
+| `modelo` | string | Modelo (ej. RAV4) |
+| `anio` | int | Año de fabricación |
+| `tipo` | string | SUV / Sedán / Camioneta / Van / Compacto / Lujo |
+| `km_actuales` | int | Kilometraje actual |
+| `estado` | enum | `DISPONIBLE` \| `NO_DISPONIBLE` |
 
 ## Estructura del repositorio
 
 ```text
 .
 ├── docker-compose.yml
-├── frontend/
-├── gateway/
-├── eureka-server/
-├── servicio-vehiculos/
-├── servicio-operaciones/
+├── frontend/               # Next.js 15 (TypeScript, Tailwind CSS)
+├── gateway/                # nginx reverse proxy
+├── servicio-vehiculos/     # FastAPI + SQLAlchemy + MySQL
+├── servicio-operaciones/   # FastAPI (almacenamiento en memoria)
 ├── scripts/
 └── docs/
 ```
@@ -41,70 +57,94 @@ Incluye frontend web, descubrimiento de servicios con Eureka, enrutamiento por G
 ## Requisitos previos
 
 - Docker 24+ y Docker Compose v2
-- (Opcional) Node.js 20+ para ejecutar frontend fuera de contenedores
-- (Opcional) Java 21 + Maven para pruebas locales de microservicios
 
-## Deploy del proyecto
+> No se requiere Java, Node.js ni Python instalados localmente; todo corre dentro de contenedores.
 
-### 1. Levantar todo el stack
+## Levantar el proyecto
+
+### Primera vez (limpiar volumen viejo si existía)
 
 ```bash
-docker compose up -d --build
+docker compose down -v
+docker compose up --build
 ```
 
-### 2. Verificar estado de contenedores
+### Usos posteriores
+
+```bash
+docker compose up --build
+```
+
+### Verificar estado
 
 ```bash
 docker compose ps
 ```
 
-### 3. Endpoints esperados
+## URLs de acceso
 
-- Eureka: `http://localhost:8761`
-- Gateway: `http://localhost:8080`
-- Frontend: `http://localhost:3000`
-- phpMyAdmin: `http://localhost:8085`
+| Servicio | URL |
+|---|---|
+| Frontend | http://localhost:3000 |
+| Gateway (API) | http://localhost:8080 |
+| phpMyAdmin | http://localhost:8085 |
+| API Vehículos (directo) | http://localhost:8001/docs |
+| API Operaciones (directo) | http://localhost:8002/docs |
 
-## Validación post-deploy
+> Los servicios FastAPI exponen documentación Swagger en `/docs`.
+
+## Validación rápida
 
 ```bash
-curl -fsS http://localhost:8761 >/dev/null
-curl -fsS http://localhost:8080/api/vehiculos >/dev/null
-curl -fsS http://localhost:8080/api/operaciones >/dev/null
-curl -fsS http://localhost:3000 >/dev/null
+# Listar vehículos
+curl http://localhost:8080/api/vehiculos
+
+# Crear un vehículo
+curl -X POST http://localhost:8080/api/vehiculos \
+  -H "Content-Type: application/json" \
+  -d '{"placa":"ABC-123","marca":"Toyota","modelo":"RAV4","anio":2023,"tipo":"SUV","km_actuales":15000,"estado":"DISPONIBLE"}'
+
+# Alquilar
+curl -X POST http://localhost:8080/api/operaciones/alquiler \
+  -H "Content-Type: application/json" \
+  -d '{"idVehiculo":1}'
 ```
 
 ## Comandos útiles
 
-### Ver logs
-
 ```bash
-docker compose logs -f gateway
-```
+# Ver logs de un servicio
+docker compose logs -f servicio-vehiculos
 
-### Reiniciar stack
+# Reconstruir solo un servicio
+docker compose up --build servicio-vehiculos
 
-```bash
+# Detener todo
 docker compose down
-docker compose up -d --build
 ```
 
 ## Troubleshooting
 
-### Error de permisos Docker socket
+### `servicio-vehiculos` no inicia — Access denied
 
-Si aparece `permission denied while trying to connect to the docker API`, ejecuta con un usuario con permisos de Docker o ajusta permisos del grupo `docker`.
-
-### Puertos ocupados
-
-Si un puerto ya está en uso (`3000`, `8080`, `8081`, `8082`, `8085`, `8761`, `3306`), libera el puerto o cambia mapeos en `docker-compose.yml`.
-
-### Servicio en estado `unhealthy`
-
-1. Revisar logs del contenedor afectado.
-2. Confirmar que dependencias estén arriba (`mysql`, `eureka-server`).
-3. Ejecutar nuevamente:
+El volumen de MySQL tiene credenciales de una ejecución anterior. Solución:
 
 ```bash
-docker compose up -d --build
+docker compose down -v   # elimina el volumen
+docker compose up --build
+```
+
+### Puerto ocupado
+
+Si algún puerto (`3000`, `8080`, `8001`, `8002`, `8085`, `3306`) ya está en uso, modifica el mapeo en `docker-compose.yml`:
+
+```yaml
+ports:
+  - "NUEVO_PUERTO:PUERTO_INTERNO"
+```
+
+### Contenedor en estado `unhealthy`
+
+```bash
+docker logs <nombre-contenedor>
 ```
