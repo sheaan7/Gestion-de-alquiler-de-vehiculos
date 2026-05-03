@@ -1,12 +1,6 @@
-FROM maven:3.9.9-eclipse-temurin-21 AS compilacion
-WORKDIR /codigo
-COPY pom.xml .
-COPY src ./src
-RUN mvn -q -DskipTests package
-
-FROM eclipse-temurin:21-jre
+FROM python:3.12-slim
 WORKDIR /app
-RUN apt-get update && apt-get install -y --no-install-recommends wget && rm -rf /var/lib/apt/lists/*
-COPY --from=compilacion /codigo/target/servicio-operaciones-0.0.1-SNAPSHOT.jar app.jar
-EXPOSE 8082
-ENTRYPOINT ["java","-jar","app.jar"]
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8002"]
