@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { listarOperaciones, cancelarOperacion } from "../../lib/clienteApi";
 import { Operacion } from "../../types/vehiculo";
 import OperacionTable from "../../components/OperacionTable";
@@ -13,7 +13,7 @@ export default function PaginaOperaciones() {
   const [procesando, setProcesando] = useState<string | null>(null);
   const [mensaje, setMensaje] = useState<{ texto: string; tipo: "exito" | "error" } | null>(null);
 
-  async function cargar() {
+  const cargar = useCallback(async () => {
     setCargando(true);
     try {
       setOperaciones(await listarOperaciones());
@@ -22,9 +22,9 @@ export default function PaginaOperaciones() {
     } finally {
       setCargando(false);
     }
-  }
+  }, []);
 
-  useEffect(() => { void cargar(); }, []);
+  useEffect(() => { void cargar(); }, [cargar]);
 
   async function cancelar(idOperacion: string) {
     setProcesando(idOperacion);

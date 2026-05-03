@@ -42,8 +42,12 @@ describe("clienteApi", () => {
     vi.stubGlobal("fetch", simuladorFetch);
 
     const resultado = await crearVehiculo({
+      placa: "MZD-001",
       marca: "Mazda",
       modelo: "3",
+      anio: 2022,
+      tipo: "Compacto",
+      km_actuales: 0,
       estado: "DISPONIBLE",
     });
 
@@ -52,8 +56,12 @@ describe("clienteApi", () => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        placa: "MZD-001",
         marca: "Mazda",
         modelo: "3",
+        anio: 2022,
+        tipo: "Compacto",
+        km_actuales: 0,
         estado: "DISPONIBLE",
       }),
     });
@@ -73,8 +81,12 @@ describe("clienteApi", () => {
     vi.stubGlobal("fetch", simuladorFetch);
 
     const resultado = await actualizarVehiculo(7, {
+      placa: "KIA-007",
       marca: "Kia",
       modelo: "Rio",
+      anio: 2021,
+      tipo: "Compacto",
+      km_actuales: 15000,
       estado: "NO_DISPONIBLE",
     });
 
@@ -83,8 +95,12 @@ describe("clienteApi", () => {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        placa: "KIA-007",
         marca: "Kia",
         modelo: "Rio",
+        anio: 2021,
+        tipo: "Compacto",
+        km_actuales: 15000,
         estado: "NO_DISPONIBLE",
       }),
     });
@@ -112,7 +128,7 @@ describe("clienteApi", () => {
     vi.stubGlobal("fetch", simuladorFetch);
 
     await expect(
-      crearVehiculo({ marca: "A", modelo: "B", estado: "DISPONIBLE" })
+      crearVehiculo({ placa: "TST-001", marca: "A", modelo: "B", anio: 2020, tipo: "Compacto", km_actuales: 0, estado: "DISPONIBLE" })
     ).rejects.toThrow("No se pudo crear el vehículo");
   });
 });
@@ -122,5 +138,11 @@ describe("compose frontend", () => {
     const rutaDockerfile = resolve(process.cwd(), "Dockerfile");
     const contenido = readFileSync(rutaDockerfile, "utf8");
     expect(contenido).toContain("ENV URL_GATEWAY=http://localhost:8080");
+  });
+
+  it("no define rewrites para /api en next.config.ts", () => {
+    const rutaNextConfig = resolve(process.cwd(), "next.config.ts");
+    const contenido = readFileSync(rutaNextConfig, "utf8");
+    expect(contenido).not.toContain("rewrites()");
   });
 });

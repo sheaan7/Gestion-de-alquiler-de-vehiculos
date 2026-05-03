@@ -1,5 +1,6 @@
 from enum import Enum
 from typing import Literal, Optional
+from datetime import date
 from pydantic import BaseModel
 
 
@@ -33,3 +34,32 @@ class VehiculoResponse(VehiculoBase):
 
 class EstadoUpdate(BaseModel):
     estado: EstadoVehiculo
+
+
+class EstadoMantenimiento(str, Enum):
+    PROGRAMADO = "PROGRAMADO"
+    EN_PROCESO = "EN_PROCESO"
+    COMPLETADO = "COMPLETADO"
+
+
+class MantenimientoBase(BaseModel):
+    idVehiculo: int
+    placa: str
+    tipo: str
+    descripcion: str
+    fechaProgramada: date
+    estado: EstadoMantenimiento = EstadoMantenimiento.PROGRAMADO
+
+
+class MantenimientoCreate(BaseModel):
+    idVehiculo: int
+    placa: str
+    tipo: str
+    descripcion: str
+    fechaProgramada: date
+
+
+class MantenimientoResponse(MantenimientoBase):
+    id: int
+
+    model_config = {"from_attributes": True}

@@ -1,5 +1,5 @@
 import enum
-from sqlalchemy import Column, Integer, String, Enum
+from sqlalchemy import Column, Integer, String, Date, Enum
 from database import Base
 
 
@@ -22,4 +22,26 @@ class Vehiculo(Base):
         Enum(EstadoVehiculo),
         nullable=False,
         default=EstadoVehiculo.DISPONIBLE,
+    )
+
+
+class EstadoMantenimiento(str, enum.Enum):
+    PROGRAMADO = "PROGRAMADO"
+    EN_PROCESO = "EN_PROCESO"
+    COMPLETADO = "COMPLETADO"
+
+
+class Mantenimiento(Base):
+    __tablename__ = "mantenimientos"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    idVehiculo = Column(Integer, nullable=False)
+    placa = Column(String(20), nullable=False)
+    tipo = Column(String(50), nullable=False)
+    descripcion = Column(String(300), nullable=False)
+    fechaProgramada = Column(Date, nullable=False)
+    estado = Column(
+        Enum(EstadoMantenimiento),
+        nullable=False,
+        default=EstadoMantenimiento.PROGRAMADO,
     )

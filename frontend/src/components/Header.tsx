@@ -8,8 +8,14 @@ import Logo from "../images/JCPerez.png";
 const LINKS = [
   { href: "/", label: "Inicio" },
   { href: "/vehiculos", label: "Vehículos" },
+  { href: "/clientes", label: "Clientes" },
   { href: "/admin", label: "Administración" },
   { href: "/operaciones", label: "Operaciones" },
+  { href: "/contratos", label: "Contratos" },
+  { href: "/reservas", label: "Reservas" },
+  { href: "/devoluciones", label: "Devoluciones" },
+  { href: "/mantenimiento", label: "Mantenimiento" },
+  { href: "/reportes", label: "Reportes" },
 ];
 
 export default function Header() {
